@@ -1,27 +1,23 @@
-var net = require('net'),
-	protocol = require("./protocol/proto"),
-	Composer = require("stream-pkg");
+var client = require("./client/RpcClient").create();
 
-var HOST = '127.0.0.1';
-var PORT = 8000;
+client.connect("8000", function(stub) {
+	stub.add(1, 2, function(result) {
+		console.log("1 + 2 = " + result);
+	});
 
-var client = new net.Socket(),
-	composer = new Composer();
-
-client.connect(PORT, HOST, function() {
-	console.log('CONNECTED TO: ' + HOST + ':' + PORT);
-
-	client.write(composer.compose(protocol.encode("__metadata__")));
+	stub.minus(2, 1, function(result) {
+		console.log("2 - 1 = " + result);
+	});
 });
 
-client.on('data', function(data) {
-	composer.feed(data);
+client.on("remote", function(stub) {
+	stub.add(56, 89, function(result) {
+		console.log("56 + 89 = " + result);
+	})
 });
 
-composer.on("data", function(data) {
-	console.log('DATA: ' + data);
-});
-
-client.on('close', function() {
-	console.log('Connection closed');
+client.on("remote", function(stub) {
+	stub.add(100, 89, function(result) {
+		console.log("100 + 89 = " + result);
+	});
 });

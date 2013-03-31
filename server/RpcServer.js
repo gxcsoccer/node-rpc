@@ -3,7 +3,8 @@ var util = require("util"),
 	protocol = require("../protocol/proto"),
 	Composer = require("stream-pkg"),
 	EventEmitter = require("events").EventEmitter,
-	hasOwnProperty = Object.prototype.hasOwnProperty;
+	hasOwnProperty = Object.prototype.hasOwnProperty,
+	slice = Array.prototype.slice;
 
 var RpcServer = function(services) {
 		this.services = services || {};
@@ -50,14 +51,18 @@ RpcServer.prototype.listen = function(port, host) {
 
 		composer.on("data", function(data) {
 			var args = protocol.decode(data),
+				id = args.shift(),
 				serviceName = args.shift(),
-				service = me.services[serviceName];
+				service = me.services[serviceName],
+				aArr = args.shift() || [];
 
 			if (service) {
-				args.push(function() {
-					socket.write(composer.compose(protocol.encode.apply(null, arguments)));
+				aArr.push(function() {
+					var rArgs = slice.call(arguments, 0);
+						rArgs.unshift(id);
+					socket.write(composer.compose(protocol.encode.apply(null, rArgs)));
 				});
-				service.apply(null, args);
+				service.apply(null, aArr);
 			}
 		});
 
