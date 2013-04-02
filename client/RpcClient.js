@@ -15,6 +15,7 @@ var RpcClient = function() {
 		this.state = false;
 		this.callback = {};
 		this.clientStub = {};
+		this.invokeQueue = [];
 
 		EventEmitter.call(this);
 	};
@@ -47,22 +48,23 @@ RpcClient.prototype.connect = function(port, host, callback) {
 		me.callback[id] = function(methods) {
 			methods.forEach(function(method) {
 				me.clientStub[method] = function() {
-					if(me.state < ST_CONNECTED) {
+					if (me.state < ST_CONNECTED) {
 						console.log("The connection is disconnected.")
 						return;
 					}
 
 					var uid = uuid.v4()
-						args = slice.call(arguments, 0),
+					args = slice.call(arguments, 0),
 						len = args.length;
 
-					if(typeof args[len - 1] == "function") {
+					if (typeof args[len - 1] == "function") {
 						me.callback[uid] = args.pop();
 					}
 					me.connection.write(composer.compose(protocol.encode.apply(null, [uid, method, args])));
 				};
 			});
 			me.state = ST_CONNECTED;
+			me.flush();
 			callback(me.clientStub);
 			me.emit("remote", me.clientStub);
 		};
@@ -96,6 +98,38 @@ RpcClient.prototype.connect = function(port, host, callback) {
  */
 RpcClient.prototype.disConnect = function() {
 	this.connection.destroy();
+};
+
+/**
+ * rpc调用
+ */
+RpcClient.prototype.invoke = function(method /*, arg1, arg2, ..., callback*/ ) {
+	var args = slice.call(arguments, 0),
+		method;
+
+	if (this.state < ST_CONNECTED) {
+		this.invokeQueue.push(args);
+		return;
+	}
+
+	method = args.shift();
+	if (typeof this.clientStub[method] === "function") {
+		this.clientStub[method].apply(null, args);
+	}
+};
+
+/**
+ * 清空调用队列
+ */
+RpcClient.prototype.flush = function() {
+	if (this.state < ST_CONNECTED) {
+		return;
+	}
+
+	var args;
+	while((args = this.invokeQueue.shift())) {
+		this.invoke.apply(this, args);
+	}
 };
 
 exports.create = function() {

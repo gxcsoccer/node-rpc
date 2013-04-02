@@ -10,6 +10,14 @@ client.connect("8000", function(stub) {
 	});
 });
 
+client.invoke("add", 100, 200, function(result) {
+	console.log("100 + 200 = " + result);
+});
+
+client.invoke("minus", 100, 200, function(result) {
+	console.log("100 - 200 = " + result);
+});
+
 client.on("remote", function(stub) {
 	stub.add(56, 89, function(result) {
 		console.log("56 + 89 = " + result);
