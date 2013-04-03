@@ -1,7 +1,5 @@
 node-rpc
 ========
-
-<<<<<<< HEAD
 node-rpc is an asynchronous rpc system for node.js that lets you call remote functions.
 
 # example
@@ -39,6 +37,3 @@ $ node server.js &
 $ node client.js
 beep => BOOP
 ```
-=======
-This is a rpc library base on nodejs
->>>>>>> 1eff48ad473ffbd5d74e96cfdab3ef548cff13af
