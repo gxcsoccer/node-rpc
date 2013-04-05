@@ -65,7 +65,7 @@ RpcClient.prototype.connect = function(port, host, callback) {
 			});
 			me.state = ST_CONNECTED;
 			me.flush();
-			callback(me.clientStub);
+			callback && callback(me.clientStub);
 			me.emit("remote", me.clientStub);
 		};
 		me.connection.write(composer.compose(protocol.encode(id, "__metadata__")));
